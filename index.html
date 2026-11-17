@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIRECTOR DIGITAL</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#142b4a;color:white;padding:22px}
+header h1{margin:0;font-size:23px}
+header p{margin:7px 0 0;color:#cbd5e1}
+.container{max-width:1100px;margin:30px auto;padding:16px}
+.login{max-width:420px;margin:70px auto;background:white;padding:30px;border-radius:16px;box-shadow:0 5px 25px #0001}
+input{width:100%;padding:13px;margin:9px 0;border:1px solid #cbd5e1;border-radius:8px;font-size:15px}
+button{padding:13px 18px;border:0;border-radius:8px;background:#1765a5;color:white;font-size:15px;cursor:pointer}
+button:hover{background:#104b7d}
+.login button{width:100%;margin-top:12px}
+.hidden{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:25px}
+.card{background:white;padding:23px;border-radius:13px;box-shadow:0 3px 12px #0000000c;cursor:pointer;border:1px solid #e2e8f0}
+.card:hover{border-color:#1765a5;transform:translateY(-2px)}
+.card .emoji{font-size:30px}
+.card h3{margin:12px 0 6px}
+.card p{color:#64748b;font-size:14px}
+#message{color:#b91c1c;font-size:14px}
+footer{text-align:center;color:#64748b;padding:30px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>DIRECTOR DIGITAL</h1>
+<p>Директордың электрондық қойын дәптері | 2026–2027</p>
+</header>
+
+<div id="login" class="login">
+<h2>Жүйеге кіру</h2>
+<p>Мектеп әкімшілігінің цифрлық басқару жүйесі</p>
+<input id="email" type="email" placeholder="Электрондық пошта">
+<input id="password" type="password" placeholder="Құпиясөз">
+<button onclick="signIn()">Жүйеге кіру</button>
+<p id="message"></p>
+</div>
+
+<div id="dashboard" class="container hidden">
+<div class="top">
+<div>
+<h2>Басқару панелі</h2>
+<p>В.И.Шубин атындағы жалпы орта білім беретін мектебі</p>
+</div>
+<button onclick="signOut()">Жүйеден шығу</button>
+</div>
+
+<div class="grid">
+<div class="card" onclick="openModule('tasks')">
+<div class="emoji">📋</div><h3>Тапсырмалар</h3>
+<p>Басқарушылық тапсырмалар мен орындалу мерзімдері</p>
+</div>
+<div class="card" onclick="openModule('events')">
+<div class="emoji">📅</div><h3>Іс-шаралар</h3>
+<p>Мектеп күнтізбесі және жоспарланған жұмыстар</p>
+</div>
+<div class="card" onclick="openModule('documents')">
+<div class="emoji">📁</div><h3>Құжаттар</h3>
+<p>Мектеп құжаттары мен анықтамалар</p>
+</div>
+<div class="card" onclick="openModule('internal_control')">
+<div class="emoji">🔍</div><h3>Мектепішілік бақылау</h3>
+<p>Бақылау жоспары және тексеру нәтижелері</p>
+</div>
+<div class="card" onclick="openModule('quality_monitoring')">
+<div class="emoji">📊</div><h3>Білім сапасының мониторингі</h3>
+<p>Үлгерім мен білім сапасын талдау</p>
+</div>
+<div class="card" onclick="openModule('notes')">
+<div class="emoji">📝</div><h3>Жеке жазбалар</h3>
+<p>Директордың электрондық қойын дәптері</p>
+</div>
+<div class="card" onclick="openModule('profiles')">
+<div class="emoji">👤</div><h3>Профиль</h3>
+<p>Пайдаланушы мәліметтері</p>
+</div>
+</div>
+<div id="moduleInfo"></div>
+</div>
+
+<footer>DIRECTOR DIGITAL © 2026 | Мектепті цифрлық басқару жүйесі</footer>
+
+<script>
+const SUPABASE_URL = "https://xmsbtkzfjmbiqoomjcjd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_MwbvgqN5gZ6xW39rh3jCQw_CoyOSbNA";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function signIn(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ const message=document.getElementById('message');
+ message.textContent="Тексерілуде...";
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){message.textContent="Қате: "+error.message;return;}
+ showDashboard();
+}
+
+async function signOut(){
+ await db.auth.signOut();
+ document.getElementById('dashboard').classList.add('hidden');
+ document.getElementById('login').classList.remove('hidden');
+}
+
+function showDashboard(){
+ document.getElementById('login').classList.add('hidden');
+ document.getElementById('dashboard').classList.remove('hidden');
+}
+
+async function openModule(table){
+ const area=document.getElementById('moduleInfo');
+ area.innerHTML="<h3>Мәліметтер жүктелуде...</h3>";
+ const {data,error}=await db.from(table).select('*').limit(20);
+ if(error){
+  area.innerHTML="<p>Мәліметтерді ашу мүмкін болмады: "+error.message+"</p>";
+  return;
+ }
+ area.innerHTML="<h3>Бөлім: "+table+"</h3><pre style='background:white;padding:15px;border-radius:10px;overflow:auto'>"+JSON.stringify(data,null,2)+"</pre>";
+}
+
+db.auth.getSession().then(({data})=>{
+ if(data.session)showDashboard();
+});
+</script>
+</body>
+</html>
